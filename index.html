@@ -1,65 +1,59 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CalcSolver Pro Games</title>
+    <title>Pro Games Calculator</title>
     <style>
-        :root { --bg:#f7f9fc; --panel:#ffffff; --accent:#00c2cb; --x-color:#ff6b6b; --o-color:#00c2cb; }
+        :root { --bg:#f7f9fc; --panel:#ffffff; --accent:#00c2cb; --x-bg:rgba(255,107,107,0.6); --o-bg:rgba(0,194,203,0.6); }
         body { background:var(--bg); font-family: sans-serif; margin:0; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
         
-        /* Calculator Design (No Changes) */
+        /* Calculator (No Changes) */
         .wrapper { width: 95%; max-width: 360px; background: var(--panel); padding: 25px; border-radius: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-        #display { width:100%; height:80px; border:none; text-align:right; font-size:3rem; outline:none; margin-bottom:25px; background:transparent; }
+        #display { width:100%; height:80px; border:none; text-align:right; font-size:3rem; outline:none; margin-bottom:25px; }
         .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; }
-        button { aspect-ratio:1/1; border:none; background:transparent; font-size:1.6rem; cursor:pointer; border-radius:50%; transition: 0.2s; }
-        button:active { background: #eee; }
+        button { aspect-ratio:1/1; border:none; background:transparent; font-size:1.6rem; cursor:pointer; border-radius:50%; }
         .op { color: var(--accent); font-weight: bold; }
 
-        /* Game Overlay */
+        /* Game System */
         #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0e11; z-index:1000; flex-direction:column; align-items:center; color:white; }
-        .game-nav { display:flex; gap:10px; margin: 20px 0; z-index: 1010; }
-        .game-nav button { aspect-ratio:unset; background:#222; color:white; padding:10px 20px; border-radius:10px; font-size:1rem; border:1px solid #444; }
+        .game-nav { display:flex; gap:10px; margin: 15px 0; }
+        .game-nav button { aspect-ratio:unset; background:#222; color:white; padding:8px 15px; border-radius:8px; border:1px solid #444; }
         
-        #gameArea { position: relative; width: 90vw; height: 90vw; max-width: 350px; max-height: 350px; background:#1a1d23; border-radius:15px; overflow:hidden; border: 4px solid #333; }
-        canvas { width: 100%; height: 100%; display:block; cursor: pointer; }
+        #gameArea { position: relative; width: 90vw; height: 90vw; max-width: 350px; max-height: 350px; border: 4px solid #333; border-radius:10px; overflow:hidden; }
+        canvas { width: 100%; height: 100%; display:block; background:#111; }
         
-        /* Tic Tac Toe Grid */
         #tttGrid { display:none; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; height: 100%; padding: 10px; box-sizing: border-box; }
-        .cell { background:#2a2d35; display:flex; align-items:center; justify-content:center; font-size:3.5rem; font-weight:bold; border-radius:12px; transition: 0.3s; }
+        .cell { background:#2a2d35; display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:bold; border-radius:10px; }
 
-        /* Status Messages */
-        .score-box { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; color: var(--accent); letter-spacing: 1px; }
-        
-        /* Win/Draw Blurs */
-        #gameStatus { display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:1050; backdrop-filter: blur(10px); display:none; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; text-align:center; flex-direction: column; }
-        .exit-btn { position:absolute; top:20px; right:20px; background:#ff4444; border:none; color:white; padding:10px 20px; border-radius:8px; z-index:1100; font-weight:bold; }
+        #gameStatus { display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:2000; backdrop-filter: blur(15px); align-items:center; justify-content:center; font-size:2.2rem; font-weight:bold; text-align:center; flex-direction:column; }
+        .exit-btn { position:absolute; top:15px; right:15px; background:#ff4444; color:white; border:none; padding:8px 15px; border-radius:5px; z-index:3000; }
     </style>
 </head>
 <body>
 
 <div class="wrapper">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; justify-content:space-between;">
         <span style="font-weight:bold; color:var(--accent);">CalcSolver</span>
-        <input type="checkbox" id="modeSwitch" style="transform: scale(1.3);">
+        <input type="checkbox" id="modeSwitch">
     </div>
     <input id="display" placeholder="0" readonly>
     <div class="grid">
-        <button onclick="clearDisplay()">AC</button><button onclick="press('%')">%</button><button onclick="back()">DEL</button><button class="op" onclick="press('/')">÷</button>
+        <button onclick="clearDisplay()">AC</button><button onclick="press('%')">%</button><button onclick="back()">⌫</button><button class="op" onclick="press('/')">÷</button>
         <button onclick="press('7')">7</button><button onclick="press('8')">8</button><button onclick="press('9')">9</button><button class="op" onclick="press('*')">×</button>
         <button onclick="press('4')">4</button><button onclick="press('5')">5</button><button onclick="press('6')">6</button><button class="op" onclick="press('-')">−</button>
         <button onclick="press('1')">1</button><button onclick="press('2')">2</button><button onclick="press('3')">3</button><button class="op" onclick="press('+')">+</button>
-        <button onclick="press('00')">00</button><button onclick="press('0')">0</button><button onclick="press('.')">.</button><button class="op" style="background:var(--accent); color:white;" onclick="solve()">=</button>
+        <button onclick="press('00')">00</button><button onclick="press('0')">0</button><button onclick="press('.')">.</button><button class="op" style="color:var(--accent)" onclick="solve()">=</button>
     </div>
 </div>
 
 <div id="overlay">
     <button class="exit-btn" onclick="location.reload()">EXIT</button>
     <div class="game-nav">
-        <button id="btnTTT" onclick="switchGame('TTT')">Tic-Tac-Toe</button>
-        <button id="btnChess" onclick="switchGame('Chess')">Chess Pro</button>
+        <button onclick="switchGame('TTT')">Tic-Tac-Toe</button>
+        <button onclick="switchGame('Chess')">Chess Pro</button>
     </div>
-    <div class="score-box" id="scoreLine">SCORE - X: 0 | O: 0</div>
+    <div id="scoreLabel" style="margin-bottom:10px; font-size:1.2rem; color:var(--accent);">Score - X: 0 | O: 0</div>
     <div id="gameArea">
         <canvas id="gameCanvas" width="400" height="400"></canvas>
         <div id="tttGrid"></div>
@@ -69,129 +63,116 @@
 
 <script>
 let expr = "";
-const display = document.getElementById('display');
-const overlay = document.getElementById('overlay');
+function press(v) { expr += v; document.getElementById('display').value = expr; if(document.getElementById('modeSwitch').checked && expr.endsWith("0000")) { overlay.style.display="flex"; switchGame('TTT'); expr=""; } }
+function solve() { try { expr = eval(expr).toString(); document.getElementById('display').value = expr; } catch { document.getElementById('display').value = "Error"; } }
+function clearDisplay() { expr = ""; document.getElementById('display').value = "0"; }
+function back() { expr = expr.slice(0,-1); document.getElementById('display').value = expr || "0"; }
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const tttGrid = document.getElementById('tttGrid');
 const statusDiv = document.getElementById('gameStatus');
-
-function press(v) { 
-    expr += v; display.value = expr; 
-    if(document.getElementById('modeSwitch').checked && expr.endsWith("0000")) {
-        expr = ""; display.value = ""; overlay.style.display = "flex"; switchGame('TTT');
-    }
-}
-function solve() { try { expr = eval(expr.replace('×','*').replace('÷','/')).toString(); display.value = expr; } catch { display.value = "Error"; expr = ""; } }
-function clearDisplay() { expr = ""; display.value = "0"; }
-function back() { expr = expr.slice(0,-1); display.value = expr || "0"; }
-
-// --- GAME LOGIC ---
-let currentGame = '';
-let tttScores = {X:0, O:0}, tttBoard = Array(9).fill(""), tttTurn = "X", gameOver = false;
+let currentGame = '', tttBoard = Array(9).fill(""), tttTurn = "X", tttScores = {X:0, O:0};
 
 function switchGame(type) {
-    currentGame = type;
-    statusDiv.style.display = "none";
-    gameOver = false;
+    currentGame = type; statusDiv.style.display="none";
     if(type === 'TTT') {
-        tttScores = {X:0, O:0}; // Reset score on switch
-        tttBoard = Array(9).fill(""); tttTurn = "X";
-        canvas.style.display = "none"; tttGrid.style.display = "grid";
-        updateScore(); renderTTT();
+        tttScores = {X:0, O:0}; tttBoard.fill("");
+        document.getElementById('tttGrid').style.display="grid"; canvas.style.display="none";
+        renderTTT(); updateScoreLabel();
     } else {
-        canvas.style.display = "block"; tttGrid.style.display = "none";
-        document.getElementById('scoreLine').innerText = "Chess: White's Turn";
+        document.getElementById('tttGrid').style.display="none"; canvas.style.display="block";
         initChess();
     }
 }
 
 // --- TIC TAC TOE ---
 function renderTTT() {
-    tttGrid.innerHTML = "";
-    tttBoard.forEach((val, i) => {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.innerText = val;
-        cell.style.color = val === "X" ? "var(--x-color)" : "var(--o-color)";
-        cell.onclick = () => { if(!tttBoard[i] && !gameOver) makeMove(i); };
-        tttGrid.appendChild(cell);
+    const grid = document.getElementById('tttGrid'); grid.innerHTML = "";
+    tttBoard.forEach((v, i) => {
+        const c = document.createElement('div'); c.className = 'cell'; c.innerText = v;
+        c.style.color = v === "X" ? "#ff6b6b" : "#00c2cb";
+        c.onclick = () => { if(!tttBoard[i]) { tttBoard[i] = tttTurn; tttTurn = tttTurn === "X" ? "O" : "X"; renderTTT(); checkTTT(); } };
+        grid.appendChild(c);
     });
 }
-
-function makeMove(i) {
-    tttBoard[i] = tttTurn;
-    renderTTT();
-    checkWinner();
-    if(!gameOver) tttTurn = tttTurn === "X" ? "O" : "X";
-}
-
-function checkWinner() {
+function checkTTT() {
     const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
     for(let w of wins) {
         if(tttBoard[w[0]] && tttBoard[w[0]] === tttBoard[w[1]] && tttBoard[w[0]] === tttBoard[w[2]]) {
-            showEnd(tttBoard[w[0]]); return;
+            showResult(tttBoard[w[0]]); return;
         }
     }
-    if(!tttBoard.includes("")) showEnd("Draw");
+    if(!tttBoard.includes("")) showResult("Draw");
 }
-
-function showEnd(result) {
-    gameOver = true;
+function showResult(res) {
     statusDiv.style.display = "flex";
-    if(result === "Draw") {
-        statusDiv.style.background = "rgba(0,0,0,0.7)";
-        statusDiv.innerHTML = "MATCH DRAW <br><small style='font-size:1rem'>Tapping to reset...</small>";
-    } else {
-        tttScores[result]++;
-        updateScore();
-        let color = result === "X" ? "rgba(255,107,107,0.5)" : "rgba(0,194,203,0.5)";
-        statusDiv.style.background = color;
-        statusDiv.innerHTML = `${result} WINS! <br><small style='font-size:1rem'>Tapping to reset...</small>`;
+    if(res === "Draw") { statusDiv.style.background = "rgba(0,0,0,0.8)"; statusDiv.innerText = "MATCH DRAW"; }
+    else { 
+        tttScores[res]++; updateScoreLabel();
+        statusDiv.style.background = res === "X" ? "var(--x-bg)" : "var(--o-bg)";
+        statusDiv.innerText = res + " WINS!";
     }
-    setTimeout(() => { 
-        tttBoard = Array(9).fill(""); tttTurn = "X"; 
-        gameOver = false; statusDiv.style.display = "none"; renderTTT(); 
-    }, 2500);
+    setTimeout(() => { statusDiv.style.display="none"; tttBoard.fill(""); renderTTT(); }, 2000);
 }
+function updateScoreLabel() { document.getElementById('scoreLabel').innerText = `Score - X: ${tttScores.X} | O: ${tttScores.O}`; }
 
-function updateScore() { document.getElementById('scoreLine').innerText = `SCORE - X: ${tttScores.X} | O: ${tttScores.O}`; }
-
-// --- CHESS PRO ---
+// --- CHESS PRO (Fixed Moves) ---
 let board = [
     ['r','n','b','q','k','b','n','r'],['p','p','p','p','p','p','p','p'],
     ['','','','','','','',''],['','','','','','','',''],
     ['','','','','','','',''],['','','','','','','',''],
     ['P','P','P','P','P','P','P','P'],['R','N','B','Q','K','B','N','R']
 ];
-let selected = null, legalMoves = [];
 const symbols = { k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟', K:'♔', Q:'♕', R:'♖', B:'♗', N:'♘', P:'♙' };
+let selected = null, legalMoves = [];
 
-function initChess() { drawBoard(); }
+function initChess() { 
+    document.getElementById('scoreLabel').innerText = "Chess: White to Move";
+    drawChess(); 
+}
 
-function drawBoard() {
+function isWhite(piece) { return piece === piece.toUpperCase(); }
+
+function getLegalMoves(r, c) {
+    let p = board[r][c];
+    let moves = [];
+    let isW = isWhite(p);
+
+    // Basic Logic for Knight, Rook, Pawn
+    const addMove = (nr, nc) => {
+        if(nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+            if(!board[nr][nc] || isWhite(board[nr][nc]) !== isW) moves.push({r: nr, c: nc});
+        }
+    };
+
+    if(p.toLowerCase() === 'p') { // Pawn
+        let dir = isW ? -1 : 1;
+        if(!board[r+dir]?.[c]) addMove(r+dir, c);
+        // Captures
+        if(board[r+dir]?.[c-1] && isWhite(board[r+dir][c-1]) !== isW) addMove(r+dir, c-1);
+        if(board[r+dir]?.[c+1] && isWhite(board[r+dir][c+1]) !== isW) addMove(r+dir, c+1);
+    } else if(p.toLowerCase() === 'n') { // Knight
+        let steps = [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]];
+        steps.forEach(s => addMove(r+s[0], c+s[1]));
+    } else if(p.toLowerCase() === 'r' || p.toLowerCase() === 'q' || p.toLowerCase() === 'b' || p.toLowerCase() === 'k') {
+        // Simplified for other pieces to allow capture but not self-kill
+        for(let i=-1; i<=1; i++){ for(let j=-1; j<=1; j++) if(i!==0 || j!==0) addMove(r+i, c+j); }
+    }
+    return moves;
+}
+
+function drawChess() {
     ctx.clearRect(0,0,400,400);
     for(let r=0; r<8; r++) {
         for(let c=0; c<8; c++) {
             ctx.fillStyle = (r+c)%2===0 ? "#ebecd0" : "#779556";
             ctx.fillRect(c*50, r*50, 50, 50);
-            
-            // Highlight Selected
-            if(selected && selected.r === r && selected.c === c) {
-                ctx.fillStyle = "rgba(255, 255, 0, 0.6)";
-                ctx.fillRect(c*50, r*50, 50, 50);
-            }
-            
-            // Show Legal Dots (Option jahan ja skta h)
+            if(selected && selected.r === r && selected.c === c) { ctx.fillStyle = "rgba(255,255,0,0.5)"; ctx.fillRect(c*50, r*50, 50, 50); }
             if(legalMoves.some(m => m.r === r && m.c === c)) {
-                ctx.beginPath();
-                ctx.arc(c*50+25, r*50+25, 8, 0, Math.PI*2);
-                ctx.fillStyle = "rgba(0,0,0,0.2)";
-                ctx.fill();
+                ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.beginPath(); ctx.arc(c*50+25, r*50+25, 8, 0, Math.PI*2); ctx.fill();
             }
-
             if(board[r][c]) {
-                ctx.fillStyle = "#000"; ctx.font = "42px Arial";
+                ctx.fillStyle = "#000"; ctx.font = "40px Arial";
                 ctx.fillText(symbols[board[r][c]], c*50+5, r*50+42);
             }
         }
@@ -206,45 +187,23 @@ canvas.onclick = (e) => {
     if(selected) {
         let move = legalMoves.find(m => m.r === r && m.c === c);
         if(move) {
-            // Normal move or Capture
+            if(board[r][c].toLowerCase() === 'k') {
+                statusDiv.style.display="flex"; 
+                statusDiv.style.background = isWhite(board[selected.r][selected.c]) ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.7)";
+                statusDiv.innerText = isWhite(board[selected.r][selected.c]) ? "WHITE WINS" : "BLACK WINS";
+                setTimeout(()=>location.reload(), 3000);
+            }
             board[r][c] = board[selected.r][selected.c];
             board[selected.r][selected.c] = '';
-            // Queen Promotion
-            if(board[r][c] === 'P' && r === 0) board[r][c] = 'Q';
-            if(board[r][c] === 'p' && r === 7) board[r][c] = 'q';
             selected = null; legalMoves = [];
-        } else {
-            // Deselect or switch selection
-            if(board[r][c]) selectPiece(r, c);
-            else { selected = null; legalMoves = []; }
-        }
+        } else if(board[r][c] && isWhite(board[r][c]) === isWhite(board[selected.r][selected.c])) {
+            selected = {r, c}; legalMoves = getLegalMoves(r, c);
+        } else { selected = null; legalMoves = []; }
     } else if(board[r][c]) {
-        selectPiece(r, c);
+        selected = {r, c}; legalMoves = getLegalMoves(r, c);
     }
-    drawBoard();
+    drawChess();
 };
-
-function selectPiece(r, c) {
-    selected = {r, c};
-    legalMoves = getMoves(r, c); // Basic moves logic
-}
-
-function getMoves(r, c) {
-    let moves = [];
-    let p = board[r][c];
-    // Simple move generation (Logic for dots)
-    let dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
-    if(p.toLowerCase() === 'p') { // Pawn basics
-        let dir = p === 'P' ? -1 : 1;
-        if(!board[r+dir]?.[c]) moves.push({r: r+dir, c: c});
-    } else {
-        dirs.forEach(d => {
-            let nr = r+d[0], nc = c+d[1];
-            if(nr>=0 && nr<8 && nc>=0 && nc<8) moves.push({r:nr, c:nc});
-        });
-    }
-    return moves;
-}
 </script>
 </body>
 </html>
