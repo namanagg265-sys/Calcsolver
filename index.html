@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Calculator Pro</title>
+    <style>
+        :root { --bg:#202124; --panel:#3c4043; --accent:#8ab4f8; --btn:#5f6368; }
+        body { background:var(--bg); color:white; font-family: Arial, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; overflow:hidden; }
+        
+        .calc { width:330px; background:var(--panel); padding:20px; border-radius:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #display { width:100%; height:60px; background:transparent; border:none; color:white; text-align:right; font-size:2.5rem; outline:none; margin-bottom:15px; }
+        .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+        button { padding:15px; border:none; border-radius:25px; background:var(--btn); color:white; font-size:1.1rem; cursor:pointer; transition: 0.1s; }
+        button:active { background:#70757a; transform:scale(0.9); }
+        .op { background:#dadce0; color:#202124; }
+        .eq { background:var(--accent); color:#202124; font-weight:bold; }
+
+        #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; text-align:center; z-index: 1000; padding-top: 20px; overflow-y: auto;}
+        .exit { position:fixed; top:15px; right:15px; background:#ea4335; color:white; padding:8px 15px; border-radius:5px; border:none; font-weight:bold; }
+        canvas { background:#111; border: 2px solid #444; border-radius: 10px; margin-top:10px; max-width: 90%; }
+        .game-nav button { background:#444; margin:5px; padding:10px; border-radius:5px; }
+    </style>
+</head>
+<body>
+
+<div class="calc">
+    <input id="display" placeholder="0" readonly>
+    <div class="grid">
+        <button class="op" onclick="calcSqrt()">√</button>
+        <button class="op" onclick="calcPower()">x²</button>
+        <button class="op" onclick="calcPercent()">%</button>
+        <button class="op" onclick="press('/')">÷</button>
+        <button onclick="press('7')">7</button>
+        <button onclick="press('8')">8</button>
+        <button onclick="press('9')">9</button>
+        <button class="op" onclick="press('*')">×</button>
+        <button onclick="press('4')">4</button>
+        <button onclick="press('5')">5</button>
+        <button onclick="press('6')">6</button>
+        <button class="op" onclick="press('-')">-</button>
+        <button onclick="press('1')">1</button>
+        <button onclick="press('2')">2</button>
+        <button onclick="press('3')">3</button>
+        <button class="op" onclick="press('+')">+</button>
+        <button onclick="press('0')">0</button>
+        <button onclick="clearDisplay()">AC</button>
+        <button onclick="back()">DEL</button>
+        <button class="eq" onclick="solve()">=</button>
+    </div>
+</div>
+
+<div id="overlay">
+    <button class="exit" onclick="closeGames()">EXIT</button>
+    <h2 style="color:var(--accent)">GAME HUB</h2>
+    <div class="game-nav">
+        <button onclick="startSnake()">Snake 🐍</button>
+        <button onclick="startDino()">Dino 🦖</button>
+        <button onclick="startUmbrella()">Umbrella ☂️</button>
+    </div>
+    <div id="scoreText" style="margin: 10px 0;">Score: 0 | High: 0</div>
+    <canvas id="canvas" width="300" height="300"></canvas>
+    <div style="margin-top: 15px;">
+        <button style="width:80px" onclick="move('up')">UP</button><br>
+        <button style="width:60px" onclick="move('left')">LEFT</button>
+        <button style="width:60px" onclick="move('down')">DOWN</button>
+        <button style="width:60px" onclick="move('right')">RIGHT</button>
+    </div>
+</div>
+
+<script>
+let expr="", secret="0000", loop, ctx;
+let highScore = localStorage.getItem("high") || 0;
+let currentScore = 0;
+const canvas = document.getElementById("canvas");
+ctx = canvas.getContext("2d");
+
+// --- Calculator (Fixed Bug #3) ---
+function press(v){
+    expr+=v; document.getElementById('display').value=expr;
+    if(expr.endsWith(secret)){ clearDisplay(); document.getElementById('overlay').style.display="block"; updateScore(); }
+}
+
+function solve(){
+    try {
+        // Safe eval replacement
+        let result = Function('"use strict";return (' + expr.replace(/[^-()\d/*+.]/g, '') + ')')();
+        document.getElementById('display').value = result;
+        expr = result.toString();
+    } catch {
+        document.getElementById('display').value = "Error";
+        expr = "";
+    }
+}
+
+function clearDisplay(){ expr=""; document.getElementById('display').value=""; }
+function back(){ expr=expr.slice(0,-1); document.getElementById('display').value=expr; }
+function calcSqrt(){ document.getElementById('display').value=Math.sqrt(eval(expr)||0); expr=""; }
+function calcPower(){ document.getElementById('display').value=Math.pow(eval(expr)||0,2); expr=""; }
+function calcPercent(){ document.getElementById('display').value=(eval(expr)||0)/100; expr=""; }
+
+// --- Game Logic (Fixed Bug #1, #2, #4) ---
+function reset(){
+    clearInterval(loop);
+    ctx.clearRect(0, 0, 300, 300);
+    ctx.fillStyle = "black";
+    ctx.fillRect(0,0,300,300);
+    currentScore = 0;
+    updateScore();
+}
+
+function updateScore(){
+    if(currentScore > highScore){
+        highScore = currentScore;
+        localStorage.setItem("high", highScore);
+    }
+    document.getElementById('scoreText').innerText = `Score: ${currentScore} | High: ${highScore}`;
+}
+
+function closeGames(){ 
+    document.getElementById('overlay').style.display="none"; 
+    reset(); 
+}
+
+function startSnake(){
+    reset();
+    let snake=[{x:10,y:10}], food={x:5,y:5}, dx=1, dy=0;
+    loop=setInterval(()=>{
+        ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+        ctx.fillStyle="red"; ctx.fillRect(food.x*15, food.y*15, 14, 14);
+        ctx.fillStyle="lime"; snake.forEach(s=>ctx.fillRect(s.x*15,s.y*15,14,14));
+        let head={x:snake[0].x+dx,y:snake[0].y+dy};
+        if(head.x<0||head.y<0||head.x>=20||head.y>=20){ alert("Game Over"); reset(); return; }
+        snake.unshift(head);
+        if(head.x===food.x && head.y===food.y){
+            currentScore++; updateScore();
+            food={x:Math.floor(Math.random()*20), y:Math.floor(Math.random()*20)};
+        } else snake.pop();
+    }, 120);
+    window.move=(d)=>{ if(d=="up"&&dy==0){dx=0;dy=-1} if(d=="down"&&dy==0){dx=0;dy=1} if(d=="left"&&dx==0){dx=-1;dy=0} if(d=="right"&&dx==0){dx=1;dy=0} };
+}
+
+function startDino(){
+    reset();
+    let y=250, jump=0, canJump=true, x=300;
+    loop=setInterval(()=>{
+        ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+        if(jump>0){ y-=5; jump--; } else if(y<250){ y+=5; } else { canJump=true; }
+        ctx.fillStyle="lime"; ctx.fillRect(40,y,20,20);
+        ctx.fillStyle="red"; ctx.fillRect(x,250,15,20);
+        x-=7;
+        if(x<0){ x=300; currentScore++; updateScore(); }
+        if(x<60 && x>20 && y>230){ alert("Crash!"); reset(); }
+    }, 30);
+    window.move=(d)=>{ if(d=="up" && canJump){ jump=25; canJump=false; } };
+}
+
+function startUmbrella(){
+    reset();
+    let px=130, drops=[];
+    loop=setInterval(()=>{
+        ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+        ctx.fillStyle="white"; ctx.fillRect(px,280,40,10);
+        ctx.fillStyle="cyan";
+        drops.forEach((d,i)=>{
+            d.y+=5; ctx.fillRect(d.x,d.y,5,10);
+            if(d.y>280 && d.x>px && d.x<px+40){ alert("Game Over"); reset(); }
+        });
+        if(Math.random()<0.1){ drops.push({x:Math.random()*300,y:0}); currentScore++; updateScore(); }
+    }, 40);
+    window.move=(d)=>{ if(d=='left')px-=20; if(d=='right')px+=20; };
+}
+</script>
+</body>
+  </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Calculator Pro</title>
+    <style>
+        :root { --bg:#202124; --panel:#3c4043; --accent:#8ab4f8; --btn:#5f6368; }
+        body { background:var(--bg); color:white; font-family: Arial, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; overflow:hidden; }
+        
+        .calc { width:330px; background:var(--panel); padding:20px; border-radius:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #display { width:100%; height:60px; background:transparent; border:none; color:white; text-align:right; font-size:2.5rem; outline:none; margin-bottom:15px; }
+        .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+        button { padding:15px; border:none; border-radius:25px; background:var(--btn); color:white; font-size:1.1rem; cursor:pointer; transition: 0.1s; }
+        button:active { background:#70757a; transform:scale(0.9); }
+        .op { background:#dadce0; color:#202124; }
+        .eq { background:var(--accent); color:#202124; font-weight:bold; }
+
+        #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:black; text-align:center; z-index: 1000; padding-top: 20px; overflow-y: auto;}
+        .exit { position:fixed; top:15px; right:15px; background:#ea4335; color:white; padding:8px 15px; border-radius:5px; border:none; font-weight:bold; }
+        canvas { background:#111; border: 2px solid #444; border-radius: 10px; margin-top:10px; max-width: 90%; }
+        .game-nav button { background:#444; margin:5px; padding:10px; border-radius:5px; }
+    </style>
+</head>
+<body>
+
+<div class="calc">
+    <input id="display" placeholder="0" readonly>
+    <div class="grid">
+        <button class="op" onclick="calcSqrt()">√</button>
+        <button class="op" onclick="calcPower()">x²</button>
+        <button class="op" onclick="calcPercent()">%</button>
+        <button class="op" onclick="press('/')">÷</button>
+        <button onclick="press('7')">7</button>
+        <button onclick="press('8')">8</button>
+        <button onclick="press('9')">9</button>
+        <button class="op" onclick="press('*')">×</button>
+        <button onclick="press('4')">4</button>
+        <button onclick="press('5')">5</button>
+        <button onclick="press('6')">6</button>
+        <button class="op" onclick="press('-')">-</button>
+        <button onclick="press('1')">1</button>
+        <button onclick="press('2')">2</button>
+        <button onclick="press('3')">3</button>
+        <button class="op" onclick="press('+')">+</button>
+        <button onclick="press('0')">0</button>
+        <button onclick="clearDisplay()">AC</button>
+        <button onclick="back()">DEL</button>
+        <button class="eq" onclick="solve()">=</button>
+    </div>
+</div>
+
+<div id="overlay">
+    <button class="exit" onclick="closeGames()">EXIT</button>
+    <h2 style="color:var(--accent)">GAME HUB</h2>
+    <div class="game-nav">
+        <button onclick="startSnake()">Snake 🐍</button>
+        <button onclick="startDino()">Dino 🦖</button>
+        <button onclick="startUmbrella()">Umbrella ☂️</button>
+    </div>
+    <div id="scoreText" style="margin: 10px 0;">Score: 0 | High: 0</div>
+    <canvas id="canvas" width="300" height="300"></canvas>
+    <div style="margin-top: 15px;">
+        <button style="width:80px" onclick="move('up')">UP</button><br>
+        <button style="width:60px" onclick="move('left')">LEFT</button>
+        <button style="width:60px" onclick="move('down')">DOWN</button>
+        <button style="width:60px" onclick="move('right')">RIGHT</button>
+    </div>
+</div>
+
+<script>
+let expr="", secret="0000", loop, ctx;
+let highScore = localStorage.getItem("high") || 0;
+let currentScore = 0;
+const canvas = document.getElementById("canvas");
+ctx = canvas.getContext("2d");
+
+// --- Calculator (Fixed Bug #3) ---
+function press(v){
+    expr+=v; document.getElementById('display').value=expr;
+    if(expr.endsWith(secret)){ clearDisplay(); document.getElementById('overlay').style.display="block"; updateScore(); }
+}
+
+function solve(){
+    try {
+        // Safe eval replacement
+        let result = Function('"use strict";return (' + expr.replace(/[^-()\d/*+.]/g, '') + ')')();
+        document.getElementById('display').value = result;
+        expr = result.toString();
+    } catch {
+        document.getElementById('display').value = "Error";
+        expr = "";
+    }
+}
+
+function clearDisplay(){ expr=""; document.getElementById('display').value=""; }
+function back(){ expr=expr.slice(0,-1); document.getElementById('display').value=expr; }
+function calcSqrt(){ document.getElementById('display').value=Math.sqrt(eval(expr)||0); expr=""; }
+function calcPower(){ document.getElementById('display').value=Math.pow(eval(expr)||0,2); expr=""; }
+function calcPercent(){ document.getElementById('display').value=(eval(expr)||0)/100; expr=""; }
+
+// --- Game Logic (Fixed Bug #1, #2, #4) ---
+function reset(){
+    clearInterval(loop);
+    ctx.clearRect(0, 0, 300, 300);
+    ctx.fillStyle = "black";
+    ctx.fillRect(0,0,300,300);
+    currentScore = 0;
+    updateScore();
+}
+
+function updateScore(){
+    if(currentScore > highScore){
+        highScore = currentScore;
+        localStorage.setItem("high", highScore);
+    }
+    document.getElementById('scoreText').innerText = `Score: ${currentScore} | High: ${highScore}`;
+}
+
+function closeGames(){ 
+    document.getElementById('overlay').style.display="none"; 
+    reset(); 
+}
+
+function startSnake(){
+    reset();
+    let snake=[{x:10,y:10}], food={x:5,y:5}, dx=1, dy=0;
+    loop=setInterval(()=>{
+        ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+        ctx.fillStyle="red"; ctx.fillRect(food.x*15, food.y*15, 14, 14);
+        ctx.fillStyle="lime"; snake.forEach(s=>ctx.fillRect(s.x*15,s.y*15,14,14));
+        let head={x:snake[0].x+dx,y:snake[0].y+dy};
+        if(head.x<0||head.y<0||head.x>=20||head.y>=20){ alert("Game Over"); reset(); return; }
+        snake.unshift(head);
+        if(head.x===food.x && head.y===food.y){
+            currentScore++; updateScore();
+            food={x:Math.floor(Math.random()*20), y:Math.floor(Math.random()*20)};
+        } else snake.pop();
+    }, 120);
+    window.move=(d)=>{ if(d=="up"&&dy==0){dx=0;dy=-1} if(d=="down"&&dy==0){dx=0;dy=1} if(d=="left"&&dx==0){dx=-1;dy=0} if(d=="right"&&dx==0){dx=1;dy=0} };
+}
+
+function startDino(){
+    reset();
+    let y=250, jump=0, canJump=true, x=300;
+    loop=setInterval(()=>{
+        ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+        if(jump>0){ y-=5; jump--; } else if(y<250){ y+=5; } else { canJump=true; }
+        ctx.fillStyle="lime"; ctx.fillRect(40,y,20,20);
+        ctx.fillStyle="red"; ctx.fillRect(x,250,15,20);
+        x-=7;
+        if(x<0){ x=300; currentScore++; updateScore(); }
+        if(x<60 && x>20 && y>230){ alert("Crash!"); reset(); }
+    }, 30);
+    window.move=(d)=>{ if(d=="up" && canJump){ jump=25; canJump=false; } };
+}
+
+function startUmbrella(){
+    reset();
+    let px=130, drops=[];
+    loop=setInterval(()=>{
+        ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
+        ctx.fillStyle="white"; ctx.fillRect(px,280,40,10);
+        ctx.fillStyle="cyan";
+        drops.forEach((d,i)=>{
+            d.y+=5; ctx.fillRect(d.x,d.y,5,10);
+            if(d.y>280 && d.x>px && d.x<px+40){ alert("Game Over"); reset(); }
+        });
+        if(Math.random()<0.1){ drops.push({x:Math.random()*300,y:0}); currentScore++; updateScore(); }
+    }, 40);
+    window.move=(d)=>{ if(d=='left')px-=20; if(d=='right')px+=20; };
+}
+</script>
+</body>
+</html>
+
