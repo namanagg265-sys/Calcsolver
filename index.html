@@ -3,47 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CalcSolver Pro</title>
+    <title>CalcSolver Pro Max</title>
     <style>
-        :root { --bg:#1a1a1c; --panel:#2d2d30; --accent:#4d90fe; --btn:#3e3e42; }
-        body { background:var(--bg); color:white; font-family: sans-serif; margin:0; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
+        :root { --bg:#f7f9fc; --panel:#ffffff; --text:#333; --accent:#00c2cb; --btn-num:#555; }
+        body { background:var(--bg); color:var(--text); font-family: 'Arial', sans-serif; margin:0; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
         
-        /* Main Calculator Container */
-        .wrapper { width: 95%; max-width: 360px; background: var(--panel); padding: 20px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+        /* White Calculator UI (Match image_12.png) */
+        .wrapper { width: 95%; max-width: 360px; background: var(--panel); padding: 25px; border-radius: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
         
-        /* Header & Code Mode Switch */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .mode-label { font-size: 0.8rem; color: #aaa; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; color: #888;}
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; border-radius: 20px; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e0e0e0; transition: .4s; border-radius: 20px; }
         .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        #display { width:100%; height:70px; background:transparent; border:none; color:white; text-align:right; font-size:2.8rem; outline:none; margin-bottom:20px; padding: 0 10px; box-sizing: border-box;}
+        #display { width:100%; height:80px; background:transparent; border:none; color:var(--text); text-align:right; font-size:3rem; outline:none; margin-bottom:25px; padding: 0 10px; box-sizing: border-box;}
         
-        .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-        button { aspect-ratio: 1/1; border:none; border-radius:50%; background:var(--btn); color:white; font-size:1.3rem; cursor:pointer; display: flex; align-items: center; justify-content: center; transition: 0.1s; }
-        button:active { background:#555; transform:scale(0.9); }
-        .op { background:#505050; color:var(--accent); font-weight: bold; }
-        .eq { background:var(--accent); color:white; font-weight:bold; }
-        .ac { color: #f28b82; }
+        .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; }
+        button { aspect-ratio: 1/1; border:none; background:transparent; color:var(--btn-num); font-size:1.6rem; cursor:pointer; display: flex; align-items: center; justify-content: center; transition: 0.1s; }
+        button:active { background:#f0f0f0; border-radius: 50%; }
+        
+        /* Special Button Styles */
+        .op { color: var(--accent); font-weight: bold; }
+        .ac { color: #ff6b6b; font-size: 1.8rem; }
+        .eq { color: var(--accent); font-size: 2rem; }
 
-        /* Full Screen Overlay */
-        #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index: 1000; flex-direction: column; align-items: center; padding-top: 10px; }
-        .exit-btn { align-self: flex-end; margin-right: 20px; background: #ea4335; padding: 8px 15px; border-radius: 5px; font-weight: bold; }
+        /* Full Screen Game Overlay (Mobile First) */
+        #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index: 1000; flex-direction: column; align-items: center; padding: 10px; color: white;}
+        .game-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .exit-btn { background: #ff4444; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; font-size: 1rem; }
         
-        canvas { background:#111; border:1px solid #333; margin: 10px 0; border-radius: 10px; width: 90vw; height: 90vw; max-width: 300px; max-height: 300px;}
-        .game-controls { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; margin-top: 10px; }
-        .ctrl-btn { width: 70px; height: 70px; border-radius: 15px; background: #333; font-size: 1.5rem; }
+        .game-nav { display: flex; gap: 10px; margin-bottom: 15px; }
+        .game-nav button { aspect-ratio: unset; background: #333; color: white; font-size: 1rem; padding: 10px 20px; border-radius: 10px; }
+        .game-nav button:active { background: var(--accent); }
+
+        #scoreBox { font-size: 1.3rem; margin-bottom: 10px; color: var(--accent); }
+        
+        canvas { background:#111; border:2px solid #333; border-radius: 15px; touch-action: none; /* Disable default touch behavior */ width: 90vw; height: 90vw; max-width: 320px; max-height: 320px;}
+        
+        #ttt { display: grid; grid-template-columns: repeat(3, 80px); gap: 8px; justify-content: center; display: none; margin-top: 20px;}
+        #ttt button { width: 80px; height: 80px; background: #222; border: 1px solid #444; border-radius: 10px; font-size: 2.5rem; color: #fff;}
     </style>
 </head>
 <body>
 
 <div class="wrapper">
     <div class="header">
-        <span style="font-weight: bold; color: var(--accent);">CalcSolver</span>
+        <span style="font-weight: bold; color: var(--accent);">CalcSolver Ultra</span>
         <div style="display: flex; align-items: center; gap: 8px;">
             <span class="mode-label">Code Mode</span>
             <label class="switch">
@@ -56,9 +64,9 @@
     <input id="display" placeholder="0" readonly>
     
     <div class="grid">
-        <button class="op ac" onclick="clearDisplay()">AC</button>
-        <button class="op" onclick="back()">DEL</button>
+        <button class="ac" onclick="clearDisplay()">C</button>
         <button class="op" onclick="calcPercent()">%</button>
+        <button class="op" onclick="back()">⌫</button>
         <button class="op" onclick="press('/')">÷</button>
         
         <button onclick="press('7')">7</button>
@@ -76,27 +84,34 @@
         <button onclick="press('3')">3</button>
         <button class="op" onclick="press('+')">+</button>
         
-        <button onclick="press('0')" style="grid-column: span 2; aspect-ratio: unset; border-radius: 30px;">0</button>
+        <button onclick="press('00')">00</button>
+        <button onclick="press('0')">0</button>
         <button onclick="press('.')">.</button>
-        <button class="eq" onclick="solve()">=</button>
+        <button class="op eq" onclick="solve()">=</button>
     </div>
 </div>
 
 <div id="overlay">
-    <button class="exit-btn" onclick="closeGames()">EXIT</button>
-    <div id="scoreBox" style="font-size: 1.2rem; margin: 5px;">Score: 0</div>
-    <div class="game-nav" style="margin-bottom: 10px;">
-        <button class="op" onclick="startSnake()" style="display:inline; padding: 10px; border-radius: 5px; aspect-ratio: unset;">Snake</button>
-        <button class="op" onclick="startDino()" style="display:inline; padding: 10px; border-radius: 5px; aspect-ratio: unset;">Dino</button>
+    <div class="game-header">
+        <h2 style="margin:0; font-size: 1.5rem;">GAME HUB</h2>
+        <button class="exit-btn" onclick="closeGames()">EXIT</button>
     </div>
+    
+    <div class="game-nav">
+        <button onclick="startSnake()">Snake 🐍</button>
+        <button onclick="startDino()">Dino 🦖</button>
+        <button onclick="startTTT()">TTT ⭕</button>
+        <button onclick="startChess()">Chess ♚</button>
+    </div>
+    
+    <div id="scoreBox">Score: 0</div>
     
     <canvas id="canvas" width="300" height="300"></canvas>
     
-    <div class="game-controls">
-        <div></div><button class="ctrl-btn" onclick="move('up')">⬆️</button><div></div>
-        <button class="ctrl-btn" onclick="move('left')">⬅️</button>
-        <button class="ctrl-btn" onclick="move('down')">⬇️</button>
-        <button class="ctrl-btn" onclick="move('right')">➡️</button>
+    <div id="ttt"></div>
+    
+    <div style="margin-top: 15px; color: #aaa; font-size: 0.9rem;">
+        Tip: Swipe on canvas to control Snake/Dino jump.
     </div>
 </div>
 
@@ -105,68 +120,114 @@ let expr="", secret="0000", loop, ctx, currentScore=0;
 const canvas = document.getElementById("canvas");
 ctx = canvas.getContext("2d");
 
+// --- Touch Control Logic (Swipe) ---
+let touchStartX, touchStartY;
+canvas.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; });
+canvas.addEventListener('touchend', handleSwipe);
+
+function handleSwipe(e) {
+    if(!touchStartX || !touchStartY) return;
+    let touchEndX = e.changedTouches[0].clientX, touchEndY = e.changedTouches[0].clientY;
+    let dx = touchEndX - touchStartX, dy = touchEndY - touchStartY;
+
+    if(Math.abs(dx) > Math.abs(dy)) { // Horizontal swipe
+        if(dx > 30) move('right'); else if(dx < -30) move('left');
+    } else { // Vertical swipe
+        if(dy > 30) move('down'); else if(dy < -30) move('up'); // UP is Dino jump
+    }
+    touchStartX = touchStartY = null;
+}
+
+// --- Calculator ---
 function press(v){
     expr+=v; document.getElementById('display').value=expr;
     let isModeOn = document.getElementById('modeSwitch').checked;
-    if(isModeOn && expr.endsWith(secret)){
-        clearDisplay();
-        document.getElementById('overlay').style.display="flex";
-    }
+    if(isModeOn && expr.endsWith(secret)){ clearDisplay(); document.getElementById('overlay').style.display="flex"; updateScore(); }
 }
-
-function solve(){
-    try {
-        let res = eval(expr);
-        document.getElementById('display').value = res;
-        expr = res.toString();
-    } catch { document.getElementById('display').value = "Error"; expr = ""; }
-}
-
+function solve(){ try { let res = Function('"use strict";return (' + expr.replace(/[^-()\d/*+.]/g, '') + ')')(); document.getElementById('display').value = res; expr = res.toString(); } catch { document.getElementById('display').value = "Error"; expr = ""; } }
 function clearDisplay(){ expr=""; document.getElementById('display').value=""; }
 function back(){ expr=expr.slice(0,-1); document.getElementById('display').value=expr; }
 function calcPercent(){ document.getElementById('display').value=(eval(expr)||0)/100; expr=""; }
 
-function closeGames(){ 
-    document.getElementById('overlay').style.display="none"; 
-    clearInterval(loop);
-}
-
+function closeGames(){ document.getElementById('overlay').style.display="none"; clearInterval(loop); }
 function updateScore(){ document.getElementById('scoreBox').innerText = "Score: " + currentScore; }
+function resetGameArea() { document.getElementById('ttt').style.display = "none"; canvas.style.display = "block"; clearInterval(loop); currentScore=0; updateScore(); }
+
+// --- New TOUCH Controls (Snake) ---
+let dxS=1, dyS=0;
+window.move=(d)=>{
+    if(d=="up" && dyS==0){dxS=0;dyS=-1} if(d=="down" && dyS==0){dxS=0;dyS=1}
+    if(d=="left" && dxS==0){dxS=-1;dyS=0} if(d=="right" && dxS==0){dxS=1;dyS=0}
+}
 
 // --- SNAKE ---
 function startSnake(){
-    clearInterval(loop); currentScore=0; updateScore();
-    let snake=[{x:10,y:10}], food={x:5,y:5}, dx=1, dy=0;
+    resetGameArea();
+    let snake=[{x:10,y:10}], food={x:5,y:5}; dxS=1; dyS=0;
     loop=setInterval(()=>{
         ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
-        ctx.fillStyle="red"; ctx.fillRect(food.x*15, food.y*15, 14, 14);
-        ctx.fillStyle="lime"; snake.forEach(s=>ctx.fillRect(s.x*15,s.y*15,14,14));
-        let head={x:snake[0].x+dx,y:snake[0].y+dy};
-        if(head.x<0||head.y<0||head.x>=20||head.y>=20){ alert("Game Over"); clearInterval(loop); return; }
+        ctx.font = "18px serif"; ctx.fillText("🍎", food.x*15, food.y*15 + 12); // Real Fruit
+        ctx.fillText("🐍", snake[0].x*15, snake[0].y*15 + 12); // Real Head
+        ctx.fillStyle="#00c2cb"; snake.slice(1).forEach(s=>ctx.fillRect(s.x*15,s.y*15,14,14)); // Body
+        let head={x:snake[0].x+dxS,y:snake[0].y+dyS};
+        if(head.x<0||head.y<0||head.x>=20||head.y>=20){ alert("Game Over!"); clearInterval(loop); return; }
         snake.unshift(head);
-        if(head.x===food.x && head.y===food.y){
-            currentScore++; updateScore();
-            food={x:Math.floor(Math.random()*20), y:Math.floor(Math.random()*20)};
-        } else snake.pop();
+        if(head.x===food.x && head.y===food.y){ currentScore++; updateScore(); food={x:Math.floor(Math.random()*20), y:Math.floor(Math.random()*20)}; } else snake.pop();
     }, 150);
-    window.move=(d)=>{ if(d=="up"&&dy==0){dx=0;dy=-1} if(d=="down"&&dy==0){dx=0;dy=1} if(d=="left"&&dx==0){dx=-1;dy=0} if(d=="right"&&dx==0){dx=1;dy=0} };
 }
 
 // --- DINO ---
 function startDino(){
-    clearInterval(loop); currentScore=0; updateScore();
-    let y=250, jump=0, x=300;
+    resetGameArea();
+    let dinoY=250, jump=0, canJump=true, cactusX=300;
+    window.move=(d)=>{ if(d=="up" && canJump){ jump=25; canJump=false; } }; // UP swipe to jump
     loop=setInterval(()=>{
         ctx.fillStyle="black"; ctx.fillRect(0,0,300,300);
-        if(jump>0){ y-=5; jump--; } else if(y<250){ y+=5; }
-        ctx.fillStyle="lime"; ctx.fillRect(40,y,20,20);
-        ctx.fillStyle="red"; ctx.fillRect(x,250,15,20);
-        x-=8;
-        if(x<0){ x=300; currentScore++; updateScore(); }
-        if(x<60 && x>20 && y>230){ alert("Crash!"); clearInterval(loop); }
+        ctx.fillStyle="white"; ctx.fillRect(0, 270, 300, 2); // Ground
+        if(jump>0){ dinoY-=5; jump--; } else if(dinoY<250){ dinoY+=5; } else { canJump=true; }
+        ctx.font = "20px serif"; ctx.fillText("🦖", 40, dinoY + 18); // Real Dino
+        ctx.fillStyle="red"; ctx.fillRect(cactusX, 250, 15, 20); cactusX-=8;
+        if(cactusX<0){ cactusX=300; currentScore++; updateScore(); }
+        if(cactusX<60 && cactusX>20 && dinoY>230){ alert("Crash!"); clearInterval(loop); }
     }, 40);
-    window.move=(d)=>{ if(d=="up" && y==250) jump=25; };
+}
+
+// --- TIC TAC TOE ---
+function startTTT(){
+    resetGameArea(); canvas.style.display="none";
+    let cells=["","","","","","","","",""], turn="X";
+    const div = document.getElementById('ttt'); div.style.display="grid";
+    div.innerHTML="";
+    cells.forEach((c,i)=>{
+        let b=document.createElement("button"); b.innerText=c;
+        b.onclick=()=>{ if(!cells[i]){cells[i]=turn; b.innerText=turn; b.style.color=(turn=="X"?"#ff6b6b":"#00c2cb"); turn=turn=="X"?"O":"X"; checkWin();} };
+        div.appendChild(b);
+    });
+    function checkWin(){ /* Basic win check can be added here */ }
+}
+
+// --- CHESS BOARD (Graphics) ---
+function startChess(){
+    resetGameArea();
+    const pieces = [
+        ["♜","♞","♝","♛","♚","♝","♞","♜"],
+        ["♟","♟","♟","♟","♟","♟","♟","♟"],
+        [" "," "," "," "," "," "," "," "],
+        [" "," "," "," "," "," "," "," "],
+        [" "," "," "," "," "," "," "," "],
+        [" "," "," "," "," "," "," "," "],
+        ["♙","♙","♙","♙","♙","♙","♙","♙"],
+        ["♖","♘","♗","♕","♔","♗","♘","♖"]
+    ];
+    for(let i=0; i<8; i++){
+        for(let j=0; j<8; j++){
+            let color = (i+j)%2==0?"#eee":"#888";
+            ctx.fillStyle=color; ctx.fillRect(j*37.5, i*37.5, 37.5, 37.5);
+            ctx.fillStyle="#000"; ctx.font="25px serif"; ctx.fillText(pieces[i][j], j*37.5+5, i*37.5+28);
+        }
+    }
 }
 </script>
 </body>
 </html>
+
